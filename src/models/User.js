@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
   {
-    // ==========================================
+    // ==========================================================
     // AUTHENTICATION
-    // ==========================================
+    // ==========================================================
 
     fullName: {
       type: String,
@@ -24,6 +24,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
 
     countryCode: {
@@ -34,11 +35,12 @@ const UserSchema = new mongoose.Schema(
     mpin: {
       type: String,
       required: true,
+      minlength: 4,
     },
 
-    // ==========================================
+    // ==========================================================
     // PERSONAL DETAILS
-    // ==========================================
+    // ==========================================================
 
     gender: {
       type: String,
@@ -53,11 +55,12 @@ const UserSchema = new mongoose.Schema(
     birthPlace: {
       type: String,
       default: "",
+      trim: true,
     },
 
-    // ==========================================
+    // ==========================================================
     // INVESTMENT PROFILE
-    // ==========================================
+    // ==========================================================
 
     investmentGoal: {
       type: String,
@@ -82,56 +85,60 @@ const UserSchema = new mongoose.Schema(
     companyName: {
       type: String,
       default: "",
+      trim: true,
     },
 
     jobTitle: {
       type: String,
       default: "",
+      trim: true,
     },
 
-    // ==========================================
+    // ==========================================================
     // KYC
-    // ==========================================
+    // ==========================================================
 
     panNumber: {
       type: String,
       uppercase: true,
       trim: true,
+      default: "",
+    },
+
+    panImageUrl: {
+      type: String,
+      default: "",
     },
 
     aadhaarNumber: {
       type: String,
       trim: true,
+      default: "",
     },
 
-    panImage: {
+    aadhaarFrontUrl: {
       type: String,
       default: "",
     },
 
-    aadhaarFrontImage: {
+    aadhaarBackUrl: {
       type: String,
       default: "",
     },
 
-    aadhaarBackImage: {
+    selfieUrl: {
       type: String,
       default: "",
     },
 
-    selfieImage: {
+    signatureUrl: {
       type: String,
       default: "",
     },
 
-    signatureImage: {
-      type: String,
-      default: "",
-    },
-
-    // ==========================================
+    // ==========================================================
     // ADDRESS
-    // ==========================================
+    // ==========================================================
 
     address: {
       type: String,
@@ -153,9 +160,9 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ==========================================
+    // ==========================================================
     // BANK
-    // ==========================================
+    // ==========================================================
 
     bankName: {
       type: String,
@@ -177,9 +184,15 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ==========================================
+    accountType: {
+      type: String,
+      enum: ["Savings", "Current"],
+      default: "Savings",
+    },
+
+    // ==========================================================
     // NOMINEE
-    // ==========================================
+    // ==========================================================
 
     nomineeName: {
       type: String,
@@ -195,18 +208,18 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ==========================================
+    // ==========================================================
     // PROFILE
-    // ==========================================
+    // ==========================================================
 
     profileImage: {
       type: String,
       default: "",
     },
 
-    // ==========================================
+    // ==========================================================
     // ACCOUNT STATUS
-    // ==========================================
+    // ==========================================================
 
     kycVerified: {
       type: Boolean,
@@ -225,18 +238,13 @@ const UserSchema = new mongoose.Schema(
 
     accountStatus: {
       type: String,
-      enum: [
-        "Pending",
-        "Active",
-        "Rejected",
-        "Blocked",
-      ],
+      enum: ["Pending", "Active", "Rejected", "Blocked"],
       default: "Pending",
     },
 
-    // ==========================================
+    // ==========================================================
     // DEVICE
-    // ==========================================
+    // ==========================================================
 
     fcmToken: {
       type: String,
@@ -248,17 +256,17 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
-    // ==========================================
+    // ==========================================================
     // LOGIN
-    // ==========================================
+    // ==========================================================
 
     lastLogin: {
       type: Date,
     },
 
-    // ==========================================
+    // ==========================================================
     // REFERRAL
-    // ==========================================
+    // ==========================================================
 
     referralCode: {
       type: String,
@@ -273,7 +281,18 @@ const UserSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
+
+// ==========================================================
+// INDEXES
+// ==========================================================
+
+UserSchema.index({ email: 1 });
+UserSchema.index({ phone: 1 });
+UserSchema.index({ panNumber: 1 });
+
+// ==========================================================
 
 module.exports = mongoose.model("User", UserSchema);

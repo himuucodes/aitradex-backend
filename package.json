@@ -1,7 +1,7 @@
 {
   "name": "aitradex-backend",
   "version": "1.0.0",
-  "description": "AiTradeX Backend API",
+  "description": "AiTradeX Stock Market Backend API",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -9,24 +9,43 @@
     "dev": "nodemon server.js"
   },
   "keywords": [
-    "aitradex",
-    "nodejs",
-    "express",
-    "mongodb",
-    "stock-market"
+    "AiTradeX",
+    "Stock Market",
+    "Node",
+    "Express",
+    "MongoDB",
+    "JWT",
+    "Flutter"
   ],
-  "author": "Johnny",
-  "license": "ISC",
+  "author": "",
+  "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
+    "cloudinary": "^2.7.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.7.4",
-    "multer": "^2.2.0"
+    "mongoose": "^8.18.0",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "validator": "^13.15.15"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/himuucodes/aitradex-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/himuucodes/aitradex-backend/issues"
+  },
+  "homepage": "https://github.com/himuucodes/aitradex-backend#readme"
 }
