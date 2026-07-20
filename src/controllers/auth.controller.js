@@ -120,10 +120,10 @@ exports.signup = async (req, res) => {
     // Create User
     // =============================
 
-    const user = await User.create({
-      fullName,
-      email,
-      phone,
+    const userData = {
+      fullName: fullName?.trim(),
+      email: email?.trim().toLowerCase(),
+      phone: phone?.trim(),
       countryCode,
 
       mpin: hashedMpin,
@@ -164,7 +164,15 @@ exports.signup = async (req, res) => {
       nomineeName,
       nomineeDob,
       nomineeRelation,
-    });
+    };
+
+    console.log("========== USER DATA ==========");
+    console.log(JSON.stringify(userData, null, 2));
+
+    const user = await User.create(userData);
+
+    console.log("========== USER SAVED ==========");
+    console.log(user);
 
     // =============================
     // JWT
@@ -184,11 +192,22 @@ exports.signup = async (req, res) => {
 
   } catch (error) {
 
+    console.error("========== SIGNUP ERROR ==========");
     console.error(error);
+
+    if (error.name === "ValidationError") {
+      console.error("Validation Errors:");
+      console.error(error.errors);
+    }
+
+    if (error.code === 11000) {
+      console.error("Duplicate Key:", error.keyValue);
+    }
 
     return res.status(500).json({
       success: false,
       message: error.message,
+      error: process.env.NODE_ENV === "development" ? error : undefined,
     });
 
   }
