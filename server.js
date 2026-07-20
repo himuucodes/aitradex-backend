@@ -1,72 +1,80 @@
 require("dotenv").config();
 
-const connectDB = require("./src/config/db");
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
-// ===============================
+const connectDB = require("./src/config/db");
+
+// ===============================================
 // Route Imports
-// ===============================
+// ===============================================
 
 const authRoutes = require("./src/routes/auth.routes");
 const userRoutes = require("./src/routes/user.routes");
 
-// ===============================
+// ===============================================
 // App
-// ===============================
+// ===============================================
 
 const app = express();
 
-// ===============================
-// Middleware
-// ===============================
+// ===============================================
+// Security & Middleware
+// ===============================================
 
 app.use(
   cors({
-    origin: "*",
+    origin: true,
     credentials: true,
   })
 );
 
 app.use(helmet());
+
 app.use(morgan("dev"));
+
 app.use(cookieParser());
-app.use(express.json({ limit: "20mb" }));
-app.use(express.urlencoded({ extended: true }));
 
-// ===============================
-// MongoDB Connection Database
-// ===============================
-connectDB();
+app.use(
+  express.json({
+    limit: "20mb",
+  })
+);
 
-// ===============================
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "20mb",
+  })
+);
+
+// ===============================================
 // Health Check
-// ===============================
+// ===============================================
 
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
     app: "AiTradeX Backend API",
     version: "1.0.0",
-    message: "Server is running successfully 🚀",
+    environment: process.env.NODE_ENV,
+    message: "🚀 Server is running successfully",
   });
 });
 
-// ===============================
+// ===============================================
 // API Routes
-// ===============================
+// ===============================================
 
 app.use("/api/auth", authRoutes);
-
 app.use("/api/user", userRoutes);
 
-// ===============================
-// 404 Handler
-// ===============================
+// ===============================================
+// 404 Route
+// ===============================================
 
 app.use((req, res) => {
   res.status(404).json({
@@ -75,12 +83,15 @@ app.use((req, res) => {
   });
 });
 
-// ===============================
+// ===============================================
 // Global Error Handler
-// ===============================
+// ===============================================
 
 app.use((err, req, res, next) => {
+  console.error("========================================");
+  console.error("Global Error");
   console.error(err);
+  console.error("========================================");
 
   res.status(err.status || 500).json({
     success: false,
@@ -88,16 +99,50 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ===============================
+// ===============================================
 // Start Server
-// ===============================
+// ===============================================
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log("========================================");
-  console.log(`🚀 AiTradeX Server Running`);
-  console.log(`🌐 http://localhost:${PORT}`);
-  console.log(`📦 Environment : ${process.env.NODE_ENV}`);
-  console.log("========================================");
+const startServer = async () => {
+  try {
+    // Connect MongoDB First
+    await connectDB();
+
+    if (require("mongoose").connection.readyState !== 1) {
+      throw new Error("MongoDB not connected");
+    }
+
+    app.listen(PORT, () => {
+      console.log("\n========================================");
+      console.log("🚀 AiTradeX Backend Started");
+      console.log(`🌐 Server      : http://localhost:${PORT}`);
+      console.log(`📦 Environment : ${process.env.NODE_ENV}`);
+      console.log("========================================\n");
+    });
+  } catch (error) {
+    console.error("========================================");
+    console.error("❌ Failed to start server");
+    console.error(error);
+    console.error("========================================");
+
+    process.exit(1);
+  }
+};
+
+startServer();
+
+// ===============================================
+// Graceful Shutdown
+// ===============================================
+
+process.on("SIGINT", () => {
+  console.log("\n🛑 Server stopped.");
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  console.log("\n🛑 Server terminated.");
+  process.exit(0);
 });
