@@ -23,6 +23,10 @@ const generateToken = (userId) => {
 // ==========================================================
 
 exports.signup = async (req, res) => {
+  console.log("====================================");
+  console.log("SIGNUP REQUEST RECEIVED");
+  console.log(JSON.stringify(req.body, null, 2));
+  console.log("====================================");
   try {
     const {
       fullName,
