@@ -77,10 +77,10 @@ exports.signup = async (req, res) => {
     // Required Fields
     // =============================
 
-    if (!fullName || !email || !phone || !mpin) {
+    if (!fullName || !email || !phone) {
       return res.status(400).json({
         success: false,
-        message: "Full Name, Email, Phone and MPIN are required.",
+        message: "Full Name, Email and Phone are required.",
       });
     }
 
@@ -114,7 +114,11 @@ exports.signup = async (req, res) => {
     // Hash MPIN
     // =============================
 
-    const hashedMpin = await bcrypt.hash(mpin, 10);
+    let hashedMpin = "";
+
+    if (mpin && mpin.trim() !== "") {
+      hashedMpin = await bcrypt.hash(mpin, 10);
+    }
 
     // =============================
     // Create User
