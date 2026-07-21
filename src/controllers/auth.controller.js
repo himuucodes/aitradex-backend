@@ -358,17 +358,12 @@ exports.resendOtp = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "AiTradeX OTP",
-      html: `
-        <h2>Your new OTP</h2>
+    console.log("OTP:", otp);
 
-        <h1>${otp}</h1>
-
-        <p>This OTP expires in 5 minutes.</p>
-      `,
+    return res.status(200).json({
+      success: true,
+      message: "OTP Generated",
+      otp: otp,
     });
 
     return res.status(200).json({
