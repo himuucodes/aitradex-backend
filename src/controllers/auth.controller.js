@@ -223,72 +223,52 @@ exports.signup = async (req, res) => {
 
 exports.sendOtp = async (req, res) => {
   try {
+    console.log("========== SEND OTP ==========");
+
     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required.",
-      });
-    }
+    console.log("Email:", email);
 
-    // Check if email already exists
-    const existingUser = await User.findOne({
-      email: email.toLowerCase(),
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "Email already registered.",
-      });
-    }
-
-    // Generate OTP
     const otp = generateOtp();
 
     console.log("Generated OTP:", otp);
 
-    // Remove previous OTP
+    console.log("Saving OTP...");
+
     await Otp.deleteMany({ email });
 
-    // Save new OTP
     await Otp.create({
-      email: email.toLowerCase(),
+      email,
       otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 min
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
+    console.log("OTP Saved");
+
     console.log("Before sendMail");
-    // Send Email
+
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "AiTradeX Email Verification",
-      html: `
-        <h2>AiTradeX</h2>
-
-        <p>Your OTP is:</p>
-
-        <h1>${otp}</h1>
-
-        <p>This OTP expires in 5 minutes.</p>
-      `,
+      subject: "OTP Test",
+      text: otp,
     });
+
     console.log("After sendMail");
 
-    return res.status(200).json({
+    return res.json({
       success: true,
-      message: "OTP sent successfully.",
+      message: "OTP sent",
     });
 
-  } catch (error) {
+  } catch (err) {
 
-    console.error(error);
+    console.error("SEND OTP ERROR");
+    console.error(err);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message,
     });
 
   }
