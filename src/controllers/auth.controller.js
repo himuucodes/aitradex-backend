@@ -2,6 +2,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
+const Otp = require("../models/Otp");
+
+const transporter = require("../config/mail");
+const generateOtp = require("../utils/generateOtp");
 
 // ==========================================================
 // Generate JWT Token
@@ -215,6 +219,192 @@ exports.signup = async (req, res) => {
     });
 
   }
+};
+
+exports.sendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered.",
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOtp();
+
+    console.log("Generated OTP:", otp);
+
+    // Remove previous OTP
+    await Otp.deleteMany({ email });
+
+    // Save new OTP
+    await Otp.create({
+      email: email.toLowerCase(),
+      otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 min
+    });
+
+    // Send Email
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "AiTradeX Email Verification",
+      html: `
+        <h2>AiTradeX</h2>
+
+        <p>Your OTP is:</p>
+
+        <h1>${otp}</h1>
+
+        <p>This OTP expires in 5 minutes.</p>
+      `,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent successfully.",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  try {
+
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and OTP are required.",
+      });
+    }
+
+    const otpData = await Otp.findOne({
+      email: email.toLowerCase(),
+      otp,
+    });
+
+    if (!otpData) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP.",
+      });
+    }
+
+    if (otpData.expiresAt < new Date()) {
+
+      await Otp.deleteOne({
+        _id: otpData._id,
+      });
+
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired.",
+      });
+    }
+
+    await Otp.deleteOne({
+      _id: otpData._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully.",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+exports.resendOtp = async (req, res) => {
+
+  try {
+
+    const { email } = req.body;
+
+    if (!email) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+
+    }
+
+    const otp = generateOtp();
+
+    await Otp.deleteMany({
+      email: email.toLowerCase(),
+    });
+
+    await Otp.create({
+      email: email.toLowerCase(),
+      otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "AiTradeX OTP",
+      html: `
+        <h2>Your new OTP</h2>
+
+        <h1>${otp}</h1>
+
+        <p>This OTP expires in 5 minutes.</p>
+      `,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP resent successfully.",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+
 };
 
 // ==========================================================

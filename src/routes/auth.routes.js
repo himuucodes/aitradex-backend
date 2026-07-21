@@ -2,25 +2,37 @@ const express = require("express");
 
 const router = express.Router();
 
-const {
-  signup,
-  login,
-  getProfile,
-} = require("../controllers/auth.controller");
-
+const authController = require("../controllers/auth.controller");
 const authMiddleware = require("../middleware/auth.middleware");
+
+// ==========================================================
+// OTP ROUTES
+// ==========================================================
+
+// Send OTP
+router.post("/send-otp", authController.sendOtp);
+
+// Verify OTP
+router.post("/verify-otp", authController.verifyOtp);
+
+// Resend OTP
+router.post("/resend-otp", authController.resendOtp);
 
 // ==========================================================
 // AUTH ROUTES
 // ==========================================================
 
-// User Signup
-router.post("/signup", signup);
+// Signup
+router.post("/signup", authController.signup);
 
-// User Login
-router.post("/login", login);
+// Login
+router.post("/login", authController.login);
 
-// Get Logged In User Profile
-router.get("/profile", authMiddleware, getProfile);
+// Profile
+router.get(
+  "/profile",
+  authMiddleware,
+  authController.getProfile
+);
 
 module.exports = router;
