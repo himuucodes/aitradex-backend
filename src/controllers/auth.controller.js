@@ -5,7 +5,7 @@ const User = require("../models/User");
 const Otp = require("../models/Otp");
 
 const transporter = require("../config/mail");
-const generateOtp = require("../utils/generateOtp");
+const generateOtp = require("../utils/genrateOtp");
 
 // ==========================================================
 // Generate JWT Token
