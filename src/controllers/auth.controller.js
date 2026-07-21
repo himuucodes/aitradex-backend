@@ -248,11 +248,35 @@ exports.sendOtp = async (req, res) => {
     console.log("Before sendMail");
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "OTP Test",
-      text: otp,
-    });
+  from: `"AiTradeX" <${process.env.EMAIL_USER}>`,
+  to: email,
+  subject: "Your AiTradeX Verification Code",
+
+  html: `
+    <div style="font-family:Arial,sans-serif;padding:30px">
+      <h2>AiTradeX</h2>
+
+      <p>Hello,</p>
+
+      <p>Your verification code is:</p>
+
+      <h1 style="
+          letter-spacing:8px;
+          color:#00C853;
+          font-size:40px;">
+          ${otp}
+      </h1>
+
+      <p>This OTP will expire in <b>5 minutes</b>.</p>
+
+      <p>If you didn't request this, you can ignore this email.</p>
+
+      <br>
+
+      <p>Thanks,<br>AiTradeX Team</p>
+    </div>
+  `,
+});
 
     console.log("After sendMail");
 
