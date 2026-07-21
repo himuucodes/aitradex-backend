@@ -5,7 +5,7 @@ const User = require("../models/User");
 const Otp = require("../models/Otp");
 
 const transporter = require("../config/mail");
-const generateOtp = require("../utils/genrateOtp");
+const generateOtp = require("../utils/generateOtp");
 
 // ==========================================================
 // Generate JWT Token
@@ -259,6 +259,7 @@ exports.sendOtp = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 min
     });
 
+    console.log("Before sendMail");
     // Send Email
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
@@ -274,6 +275,7 @@ exports.sendOtp = async (req, res) => {
         <p>This OTP expires in 5 minutes.</p>
       `,
     });
+    console.log("After sendMail");
 
     return res.status(200).json({
       success: true,
