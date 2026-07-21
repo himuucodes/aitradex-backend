@@ -1,14 +1,20 @@
 const nodemailer = require("nodemailer");
 
+console.log("========== SMTP CONFIG ==========");
+console.log("Host:", process.env.SMTP_HOST);
+console.log("Port:", process.env.SMTP_PORT);
+console.log("User:", process.env.SMTP_USER);
+console.log("Pass Exists:", !!process.env.SMTP_PASS);
+console.log("=================================");
+
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
   secure: false,
-  family: 4, // Force IPv4
 
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 
   tls: {
@@ -20,11 +26,12 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 10000,
 });
 
-transporter.verify((error) => {
+transporter.verify((error, success) => {
   if (error) {
-    console.error("SMTP ERROR:", error);
+    console.error("❌ SMTP VERIFY FAILED");
+    console.error(error);
   } else {
-    console.log("✅ SMTP Connected");
+    console.log("✅ SMTP VERIFIED");
   }
 });
 

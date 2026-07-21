@@ -248,35 +248,69 @@ exports.sendOtp = async (req, res) => {
     console.log("Before sendMail");
 
     await transporter.sendMail({
-  from: `"AiTradeX" <${process.env.EMAIL_USER}>`,
-  to: email,
-  subject: "Your AiTradeX Verification Code",
+      from: `"AiTradeX" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "AiTradeX Email Verification",
 
-  html: `
-    <div style="font-family:Arial,sans-serif;padding:30px">
-      <h2>AiTradeX</h2>
+      html: `
+  <!DOCTYPE html>
+  <html>
+  <body style="margin:0;padding:30px;background:#f5f5f5;font-family:Arial">
 
-      <p>Hello,</p>
+      <div style="
+          max-width:600px;
+          margin:auto;
+          background:#ffffff;
+          padding:40px;
+          border-radius:12px;
+      ">
 
-      <p>Your verification code is:</p>
+          <h2 style="color:#F92902;">
+              AiTradeX
+          </h2>
 
-      <h1 style="
-          letter-spacing:8px;
-          color:#00C853;
-          font-size:40px;">
-          ${otp}
-      </h1>
+          <p>Hello,</p>
 
-      <p>This OTP will expire in <b>5 minutes</b>.</p>
+          <p>
+              Your One-Time Password (OTP) for email verification is:
+          </p>
 
-      <p>If you didn't request this, you can ignore this email.</p>
+          <div style="
+              font-size:42px;
+              font-weight:bold;
+              color:#F92902;
+              letter-spacing:10px;
+              text-align:center;
+              margin:30px 0;
+          ">
+              ${otp}
+          </div>
 
-      <br>
+          <p>
+              This OTP will expire in
+              <b>5 minutes</b>.
+          </p>
 
-      <p>Thanks,<br>AiTradeX Team</p>
-    </div>
+          <p>
+              If you did not request this verification,
+              please ignore this email.
+          </p>
+
+          <br>
+
+          <hr>
+
+          <p>
+              Regards,<br>
+              <b>AiTradeX Team</b>
+          </p>
+
+      </div>
+
+  </body>
+  </html>
   `,
-});
+    });
 
     console.log("After sendMail");
 
