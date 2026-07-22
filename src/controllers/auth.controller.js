@@ -7,6 +7,9 @@ const Otp = require("../models/Otp");
 const transporter = require("../config/mail");
 const generateOtp = require("../utils/generateOtp");
 
+const brevo = require("../config/brevo");
+const email = new (require("@getbrevo/brevo").SendSmtpEmail)();
+
 // ==========================================================
 // Generate JWT Token
 // ==========================================================
@@ -225,18 +228,28 @@ exports.sendOtp = async (req, res) => {
   try {
     console.log("========== SEND OTP ==========");
 
-    const { email } = req.body;
+    let { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+    }
+
+    email = email.trim().toLowerCase();
 
     console.log("Email:", email);
 
+    // Generate OTP
     const otp = generateOtp();
 
     console.log("Generated OTP:", otp);
 
-    console.log("Saving OTP...");
-
+    // Delete old OTP
     await Otp.deleteMany({ email });
 
+    // Save new OTP
     await Otp.create({
       email,
       otp,
@@ -245,88 +258,94 @@ exports.sendOtp = async (req, res) => {
 
     console.log("OTP Saved");
 
-    console.log("Before sendMail");
+    // Create email
+    const sendSmtpEmail = new (require("@getbrevo/brevo").SendSmtpEmail)();
 
-    await transporter.sendMail({
-      from: `"AiTradeX" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "AiTradeX Email Verification",
+    sendSmtpEmail.sender = {
+      name: process.env.SENDER_NAME,
+      email: process.env.SENDER_EMAIL,
+    };
 
-      html: `
-  <!DOCTYPE html>
-  <html>
-  <body style="margin:0;padding:30px;background:#f5f5f5;font-family:Arial">
+    sendSmtpEmail.to = [
+      {
+        email: email,
+      },
+    ];
 
-      <div style="
-          max-width:600px;
-          margin:auto;
-          background:#ffffff;
-          padding:40px;
-          border-radius:12px;
-      ">
+    sendSmtpEmail.subject = "AiTradeX Email Verification";
 
-          <h2 style="color:#F92902;">
-              AiTradeX
-          </h2>
+    sendSmtpEmail.htmlContent = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:30px;background:#f5f5f5;font-family:Arial">
 
-          <p>Hello,</p>
+<div style="
+    max-width:600px;
+    margin:auto;
+    background:#ffffff;
+    padding:40px;
+    border-radius:12px;
+">
 
-          <p>
-              Your One-Time Password (OTP) for email verification is:
-          </p>
+<h2 style="color:#F92902;">
+AiTradeX
+</h2>
 
-          <div style="
-              font-size:42px;
-              font-weight:bold;
-              color:#F92902;
-              letter-spacing:10px;
-              text-align:center;
-              margin:30px 0;
-          ">
-              ${otp}
-          </div>
+<p>Hello,</p>
 
-          <p>
-              This OTP will expire in
-              <b>5 minutes</b>.
-          </p>
+<p>Your One-Time Password (OTP) for email verification is:</p>
 
-          <p>
-              If you did not request this verification,
-              please ignore this email.
-          </p>
+<div style="
+font-size:42px;
+font-weight:bold;
+color:#F92902;
+letter-spacing:10px;
+text-align:center;
+margin:30px 0;
+">
+${otp}
+</div>
 
-          <br>
+<p>
+This OTP will expire in <b>5 minutes</b>.
+</p>
 
-          <hr>
+<p>
+If you did not request this verification, please ignore this email.
+</p>
 
-          <p>
-              Regards,<br>
-              <b>AiTradeX Team</b>
-          </p>
+<hr>
 
-      </div>
+<p>
+Regards,<br>
+<b>AiTradeX Team</b>
+</p>
 
-  </body>
-  </html>
-  `,
-    });
+</div>
 
-    console.log("After sendMail");
+</body>
+</html>
+`;
 
-    return res.json({
+    console.log("Sending Email...");
+
+    await brevo.sendTransacEmail(sendSmtpEmail);
+
+    console.log("Email Sent Successfully");
+
+    return res.status(200).json({
       success: true,
-      message: "OTP sent",
+      message: "OTP sent successfully.",
     });
 
   } catch (err) {
 
-    console.error("SEND OTP ERROR");
+    console.error("========== SEND OTP ERROR ==========");
     console.error(err);
 
     return res.status(500).json({
       success: false,
-      message: err.message,
+      message: err.message || "Failed to send OTP.",
     });
 
   }
