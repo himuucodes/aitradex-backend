@@ -9,23 +9,15 @@ const phoneOtpSchema = new mongoose.Schema(
       index: true,
     },
 
-    countryCode: {
-      type: String,
-      default: "+91",
-      trim: true,
-    },
-
-    verificationId: {
+    otp: {
       type: String,
       required: true,
-      trim: true,
     },
 
     purpose: {
       type: String,
       enum: ["signup", "signin"],
       default: "signup",
-      required: true,
     },
 
     verified: {
@@ -36,14 +28,7 @@ const phoneOtpSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       required: true,
-      index: {
-        expires: 0, // MongoDB TTL index
-      },
-    },
-
-    lastAttemptAt: {
-      type: Date,
-      default: Date.now,
+      index: { expires: 0 },
     },
   },
   {
@@ -52,7 +37,6 @@ const phoneOtpSchema = new mongoose.Schema(
   }
 );
 
-// Compound index
 phoneOtpSchema.index({
   phone: 1,
   purpose: 1,

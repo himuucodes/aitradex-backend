@@ -237,7 +237,8 @@ exports.sendPhoneOtp = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "OTP sent successfully.",
-      data: result,
+      otp: result.otp,          // Remove this later in production
+      expiresAt: result.expiresAt,
     });
 
   } catch (error) {
