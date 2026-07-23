@@ -5,10 +5,9 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const path = require("path");
 
 const connectDB = require("./src/config/db");
-
-const path = require("path");
 
 // ===============================================
 // Route Imports
@@ -18,22 +17,22 @@ const authRoutes = require("./src/routes/auth.routes");
 const userRoutes = require("./src/routes/user.routes");
 
 // ===============================================
-// Static Files
-// ===============================================
-
-app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/captcha", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "public", "captcha.html")
-  );
-});
-
-// ===============================================
 // App
 // ===============================================
 
 const app = express();
+
+// ===============================================
+// Static Files
+// ===============================================
+
+// Serve public folder
+app.use(express.static(path.join(__dirname, "public")));
+
+// Captcha Page
+app.get("/captcha", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "captcha.html"));
+});
 
 // ===============================================
 // Security & Middleware
@@ -121,7 +120,6 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Connect MongoDB First
     await connectDB();
 
     if (require("mongoose").connection.readyState !== 1) {
