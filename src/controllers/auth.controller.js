@@ -4,11 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Otp = require("../models/Otp");
 
-const transporter = require("../config/mail");
-const generateOtp = require("../utils/generateOtp");
-
 const otpService = require("../services/otp.service");
-
 
 // ==========================================================
 // Generate JWT Token
@@ -310,39 +306,17 @@ exports.verifyOtp = async (req, res) => {
 };
 
 exports.resendOtp = async (req, res) => {
-
   try {
-
     const { email } = req.body;
 
     if (!email) {
-
       return res.status(400).json({
         success: false,
         message: "Email is required.",
       });
-
     }
 
-    const otp = generateOtp();
-
-    await Otp.deleteMany({
-      email: email.toLowerCase(),
-    });
-
-    await Otp.create({
-      email: email.toLowerCase(),
-      otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
-
-    console.log("OTP:", otp);
-
-    return res.status(200).json({
-      success: true,
-      message: "OTP Generated",
-      otp: otp,
-    });
+    await otpService.sendOtp(email);
 
     return res.status(200).json({
       success: true,
@@ -350,18 +324,14 @@ exports.resendOtp = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error(error);
 
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
-
 };
-
 // ==========================================================
 // LOGIN
 // POST /api/auth/login
