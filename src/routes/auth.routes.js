@@ -19,6 +19,8 @@ router.post("/verify-otp", authController.verifyOtp);
 // Resend OTP
 router.post("/resend-otp", authController.resendOtp);
 
+
+
 // ==========================================================
 // AUTH ROUTES
 // ==========================================================
@@ -35,6 +37,12 @@ router.get(
   authMiddleware,
   authController.getProfile
 );
+
+// ==========================================================
+// CLOUDFLARE CAPTCHA TURNSTILE ROUTES
+// ==========================================================
+
+router.post("/verify-turnstile", authController.verifyTurnstile);
 
 router.get("/smtp-test", async (req, res) => {
   try {
@@ -121,5 +129,7 @@ router.get("/otp-test", async (req, res) => {
     });
   }
 });
+
+
 
 module.exports = router;

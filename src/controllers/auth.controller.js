@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Otp = require("../models/Otp");
 
 const otpService = require("../services/otp.service");
+const { verifyTurnstile } = require("../services/turnstile.service");
 
 // ==========================================================
 // Generate JWT Token
@@ -329,6 +330,40 @@ exports.resendOtp = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+exports.verifyTurnstile = async (req, res) => {
+  try {
+    const { email, token } = req.body;
+
+    if (!email || !token) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and token are required.",
+      });
+    }
+
+    const result = await verifyTurnstile(token);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Captcha verification failed.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Captcha verified successfully.",
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
     });
   }
 };
