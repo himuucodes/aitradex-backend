@@ -14,3 +14,5 @@ const transporter = nodemailer.createTransport({
     return dns.lookup(hostname, { family: 4 }, callback);
   },
 });
+
+module.exports = transporter;
