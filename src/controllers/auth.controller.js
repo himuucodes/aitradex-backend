@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
-const Otp = require("../models/Otp");
+const PhoneOtp = require("../models/PhoneOtp");
 
 const otpService = require("../services/otp.service");
 const { verifyTurnstile } = require("../services/turnstile.service");
