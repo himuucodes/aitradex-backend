@@ -253,7 +253,7 @@ exports.sendPhoneOtp = async (req, res) => {
 
 exports.verifyPhoneOtp = async (req, res) => {
   try {
-    const { phone, otp, purpose = "signup" } = req.body;
+    const { phone, otp } = req.body;
 
     if (!phone || !otp) {
       return res.status(400).json({
@@ -264,8 +264,7 @@ exports.verifyPhoneOtp = async (req, res) => {
 
     const result = await otpService.verifyPhoneOtp(
       phone,
-      otp,
-      purpose
+      otp
     );
 
     return res.status(200).json({
@@ -286,7 +285,7 @@ exports.verifyPhoneOtp = async (req, res) => {
 
 exports.resendPhoneOtp = async (req, res) => {
   try {
-    const { phone, purpose = "signup" } = req.body;
+    const { phone } = req.body;
 
     if (!phone) {
       return res.status(400).json({
@@ -295,10 +294,7 @@ exports.resendPhoneOtp = async (req, res) => {
       });
     }
 
-    const result = await otpService.resendPhoneOtp(
-      phone,
-      purpose
-    );
+    const result = await otpService.sendPhoneOtp(phone);
 
     return res.status(200).json({
       success: true,

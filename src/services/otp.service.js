@@ -1,7 +1,7 @@
 const PhoneOtp = require("../models/PhoneOtp");
 
 // ==========================================================
-// Generate OTP
+// Generate 6 Digit OTP
 // ==========================================================
 
 const generateOtp = () => {
@@ -9,80 +9,86 @@ const generateOtp = () => {
 };
 
 // ==========================================================
-// SEND OTP
+// SEND OTP (Signup)
 // ==========================================================
 
-const sendPhoneOtp = async (phone, purpose = "signup") => {
-  phone = phone.trim();
+const sendPhoneOtp = async (phone) => {
+  try {
+    phone = phone.trim();
 
-  const otp = generateOtp();
+    const otp = generateOtp();
 
-  console.log("=================================");
-  console.log("PHONE OTP");
-  console.log("Phone :", phone);
-  console.log("OTP   :", otp);
-  console.log("=================================");
+    console.log("==================================");
+    console.log("SEND SIGNUP OTP");
+    console.log("Phone :", phone);
+    console.log("OTP   :", otp);
+    console.log("==================================");
 
-  await PhoneOtp.deleteMany({
-    phone,
-    purpose,
-  });
+    // Delete old OTP
+    await PhoneOtp.deleteOne({
+      phone,
+    });
 
-  const otpDoc = await PhoneOtp.create({
-    phone,
-    otp,
-    purpose,
-    verified: false,
-    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-  });
+    // Save new OTP
+    const otpDoc = await PhoneOtp.create({
+      phone,
+      otp,
+      verified: false,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
 
-  return {
-    otp,
-    expiresAt: otpDoc.expiresAt,
-  };
+    return {
+      otp,
+      expiresAt: otpDoc.expiresAt,
+    };
+  } catch (error) {
+    console.error("SEND OTP ERROR");
+    console.error(error);
+    throw error;
+  }
 };
 
 // ==========================================================
-// VERIFY OTP
+// VERIFY OTP (Signup)
 // ==========================================================
 
-const verifyPhoneOtp = async (
-  phone,
-  otp,
-  purpose = "signup"
-) => {
+const verifyPhoneOtp = async (phone, otp) => {
+  try {
+    phone = phone.trim();
+    otp = otp.trim();
 
-  phone = phone.trim();
-  otp = otp.trim();
-
-  const otpDoc = await PhoneOtp.findOne({
-    phone,
-    purpose,
-  });
-
-  if (!otpDoc) {
-    throw new Error("OTP not found.");
-  }
-
-  if (otpDoc.expiresAt < new Date()) {
-    await PhoneOtp.deleteOne({
-      _id: otpDoc._id,
+    const otpDoc = await PhoneOtp.findOne({
+      phone,
     });
 
-    throw new Error("OTP has expired.");
+    if (!otpDoc) {
+      throw new Error("OTP not found.");
+    }
+
+    if (otpDoc.expiresAt < new Date()) {
+      await PhoneOtp.deleteOne({ _id: otpDoc._id });
+      throw new Error("OTP has expired.");
+    }
+
+    if (otpDoc.otp !== otp) {
+      throw new Error("Invalid OTP.");
+    }
+
+    otpDoc.verified = true;
+    await otpDoc.save();
+
+    // Remove OTP after successful verification
+    await PhoneOtp.deleteOne({ _id: otpDoc._id });
+
+    return {
+      verified: true,
+      message: "OTP verified successfully.",
+    };
+  } catch (error) {
+    console.error("VERIFY OTP ERROR");
+    console.error(error);
+    throw error;
   }
-
-  if (otpDoc.otp !== otp) {
-    throw new Error("Invalid OTP.");
-  }
-
-  otpDoc.verified = true;
-
-  await otpDoc.save();
-
-  return {
-    verified: true,
-  };
 };
 
 module.exports = {
