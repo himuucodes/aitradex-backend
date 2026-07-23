@@ -3,11 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AiTradeX Verification</title>
+    <title>AiTradeX Human Verification</title>
 
     <script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js"
@@ -16,62 +14,63 @@
     </script>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f5f7fb;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        body{
+            font-family:Arial,Helvetica,sans-serif;
+            background:#f5f7fb;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
         }
 
-        .card {
-            width: 380px;
-            max-width: 90%;
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.12);
-            text-align: center;
+        .card{
+            width:380px;
+            max-width:90%;
+            background:#fff;
+            padding:30px;
+            border-radius:20px;
+            box-shadow:0 10px 30px rgba(0,0,0,.12);
+            text-align:center;
         }
 
-        h2 {
-            margin-bottom: 12px;
+        h2{
+            margin-bottom:10px;
         }
 
-        p {
-            color: #666;
-            margin-bottom: 25px;
+        p{
+            color:#666;
+            margin-bottom:25px;
         }
 
-        .cf-turnstile {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 25px;
+        .cf-turnstile{
+            display:flex;
+            justify-content:center;
+            margin-bottom:25px;
         }
 
-        button {
-            width: 100%;
-            height: 50px;
-            border: none;
-            border-radius: 12px;
-            background: #f92902;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
+        button{
+            width:100%;
+            height:50px;
+            border:none;
+            border-radius:12px;
+            background:#f92902;
+            color:white;
+            font-size:16px;
+            cursor:pointer;
         }
 
-        button:disabled {
-            background: grey;
-            cursor: not-allowed;
+        button:disabled{
+            background:#999;
+            cursor:not-allowed;
         }
     </style>
+
 </head>
 
 <body>
@@ -87,11 +86,14 @@
         <div
             class="cf-turnstile"
             data-sitekey="0x4AAAAAAD8FzlvcdLuU71es"
-            data-callback="captchaSuccess">
+            data-callback="captchaSuccess"
+            data-expired-callback="captchaExpired"
+            data-error-callback="captchaError">
         </div>
 
         <button
             id="continueBtn"
+            type="submit"
             disabled>
             Continue
         </button>
@@ -104,10 +106,28 @@
 
 let token = "";
 
+// Read email from URL
+const params = new URLSearchParams(window.location.search);
+const email = params.get("email");
+
+// Success callback
 function captchaSuccess(turnstileToken){
     token = turnstileToken;
-
     document.getElementById("continueBtn").disabled = false;
+}
+
+// Expired callback
+function captchaExpired(){
+    token = "";
+    document.getElementById("continueBtn").disabled = true;
+    alert("Captcha expired. Please verify again.");
+}
+
+// Error callback
+function captchaError(){
+    token = "";
+    document.getElementById("continueBtn").disabled = true;
+    alert("Captcha verification failed.");
 }
 
 document
@@ -116,30 +136,52 @@ document
 
     e.preventDefault();
 
-    const response = await fetch("/api/auth/verify-turnstile",{
+    if(!email){
+        alert("Email parameter missing.");
+        return;
+    }
 
-        method:"POST",
+    if(!token){
+        alert("Captcha not completed.");
+        return;
+    }
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+    try{
 
-        body:JSON.stringify({
-            token:token
-        })
+        const response = await fetch("/api/auth/verify-turnstile",{
 
-    });
+            method:"POST",
 
-    const result = await response.json();
+            headers:{
+                "Content-Type":"application/json"
+            },
 
-    if(result.success){
+            body:JSON.stringify({
+                email:email,
+                token:token
+            })
 
-        window.location.href =
-        "aitradex://captcha-success";
+        });
 
-    }else{
+        const result = await response.json();
 
-        alert(result.message);
+        if(result.success){
+
+            // Return to Flutter
+            window.location.href =
+            "aitradex://captcha-success";
+
+        }else{
+
+            alert(result.message);
+
+        }
+
+    }catch(err){
+
+        alert("Server Error");
+
+        console.error(err);
 
     }
 
@@ -148,4 +190,5 @@ document
 </script>
 
 </body>
+
 </html>
