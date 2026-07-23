@@ -53,42 +53,43 @@ const sendPhoneOtp = async (phone) => {
 // ==========================================================
 
 const verifyPhoneOtp = async (phone, otp) => {
-  try {
-    phone = phone.trim();
-    otp = otp.trim();
+  phone = phone.trim();
+  otp = otp.trim();
 
-    const otpDoc = await PhoneOtp.findOne({
-      phone,
-    });
+  console.log("========== VERIFY OTP ==========");
+  console.log("Phone received:", phone);
+  console.log("OTP received:", otp);
 
-    if (!otpDoc) {
-      throw new Error("OTP not found.");
-    }
+  const allOtps = await PhoneOtp.find();
 
-    if (otpDoc.expiresAt < new Date()) {
-      await PhoneOtp.deleteOne({ _id: otpDoc._id });
-      throw new Error("OTP has expired.");
-    }
+  console.log("All OTP Records:");
+  console.log(allOtps);
 
-    if (otpDoc.otp !== otp) {
-      throw new Error("Invalid OTP.");
-    }
+  const otpDoc = await PhoneOtp.findOne({ phone });
 
-    otpDoc.verified = true;
-    await otpDoc.save();
+  console.log("Mongo Result:", otpDoc);
 
-    // Remove OTP after successful verification
-    await PhoneOtp.deleteOne({ _id: otpDoc._id });
-
-    return {
-      verified: true,
-      message: "OTP verified successfully.",
-    };
-  } catch (error) {
-    console.error("VERIFY OTP ERROR");
-    console.error(error);
-    throw error;
+  if (!otpDoc) {
+    throw new Error("OTP not found.");
   }
+
+  if (otpDoc.expiresAt < new Date()) {
+    await PhoneOtp.deleteOne({ _id: otpDoc._id });
+    throw new Error("OTP has expired.");
+  }
+
+  if (otpDoc.otp !== otp) {
+    throw new Error("Invalid OTP.");
+  }
+
+  otpDoc.verified = true;
+  await otpDoc.save();
+
+  await PhoneOtp.deleteOne({ _id: otpDoc._id });
+
+  return {
+    verified: true,
+  };
 };
 
 module.exports = {
