@@ -221,107 +221,88 @@ exports.signup = async (req, res) => {
   }
 };
 
-exports.sendOtp = async (req, res) => {
+exports.sendPhoneOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { phone, purpose = "signup" } = req.body;
 
-    if (!email) {
+    if (!phone) {
       return res.status(400).json({
         success: false,
-        message: "Email is required.",
+        message: "Phone number is required.",
       });
     }
 
-    await otpService.sendOtp(email);
+    const result = await otpService.sendPhoneOtp(phone, purpose);
 
     return res.status(200).json({
       success: true,
       message: "OTP sent successfully.",
+      data: result,
     });
 
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
 
     return res.status(500).json({
       success: false,
-      message: err.message,
+      message: error.message,
     });
   }
 };
 
-exports.verifyOtp = async (req, res) => {
+exports.verifyPhoneOtp = async (req, res) => {
   try {
+    const { phone, otp, purpose = "signup" } = req.body;
 
-    const { email, otp } = req.body;
-
-    if (!email || !otp) {
+    if (!phone || !otp) {
       return res.status(400).json({
         success: false,
-        message: "Email and OTP are required.",
+        message: "Phone number and OTP are required.",
       });
     }
 
-    const otpData = await Otp.findOne({
-      email: email.toLowerCase(),
+    const result = await otpService.verifyPhoneOtp(
+      phone,
       otp,
-    });
-
-    if (!otpData) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP.",
-      });
-    }
-
-    if (otpData.expiresAt < new Date()) {
-
-      await Otp.deleteOne({
-        _id: otpData._id,
-      });
-
-      return res.status(400).json({
-        success: false,
-        message: "OTP expired.",
-      });
-    }
-
-    await Otp.deleteOne({
-      _id: otpData._id,
-    });
+      purpose
+    );
 
     return res.status(200).json({
       success: true,
       message: "OTP verified successfully.",
+      data: result,
     });
 
   } catch (error) {
-
     console.error(error);
 
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-exports.resendOtp = async (req, res) => {
+exports.resendPhoneOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { phone, purpose = "signup" } = req.body;
 
-    if (!email) {
+    if (!phone) {
       return res.status(400).json({
         success: false,
-        message: "Email is required.",
+        message: "Phone number is required.",
       });
     }
 
-    await otpService.sendOtp(email);
+    const result = await otpService.resendPhoneOtp(
+      phone,
+      purpose
+    );
 
     return res.status(200).json({
       success: true,
       message: "OTP resent successfully.",
+      data: result,
     });
 
   } catch (error) {
@@ -333,7 +314,6 @@ exports.resendOtp = async (req, res) => {
     });
   }
 };
-
 exports.verifyTurnstile = async (req, res) => {
   try {
     const { email, token } = req.body;
