@@ -1,7 +1,7 @@
 const PhoneOtp = require("../models/PhoneOtp");
 
 // ==========================================================
-// Generate 6 Digit OTP
+// Generate OTP
 // ==========================================================
 
 const generateOtp = () => {
@@ -9,52 +9,83 @@ const generateOtp = () => {
 };
 
 // ==========================================================
-// SEND PHONE OTP
+// SEND OTP
 // ==========================================================
 
 const sendPhoneOtp = async (phone, purpose = "signup") => {
-  try {
-    phone = phone.trim();
+  phone = phone.trim();
 
-    // Generate OTP
-    const otp = generateOtp();
+  const otp = generateOtp();
 
-    console.log("==================================");
-    console.log("PHONE OTP");
-    console.log("Phone :", phone);
-    console.log("OTP   :", otp);
-    console.log("==================================");
+  console.log("=================================");
+  console.log("PHONE OTP");
+  console.log("Phone :", phone);
+  console.log("OTP   :", otp);
+  console.log("=================================");
 
-    // Remove old OTP
-    await PhoneOtp.deleteMany({
-      phone,
-      purpose,
-    });
+  await PhoneOtp.deleteMany({
+    phone,
+    purpose,
+  });
 
-    // Save new OTP
-    const otpDoc = await PhoneOtp.create({
-      phone,
-      otp,
-      purpose,
-      verified: false,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
+  const otpDoc = await PhoneOtp.create({
+    phone,
+    otp,
+    purpose,
+    verified: false,
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+  });
 
-    console.log("OTP Saved:", otpDoc._id);
+  return {
+    otp,
+    expiresAt: otpDoc.expiresAt,
+  };
+};
 
-    return {
-      otp,
-      expiresAt: otpDoc.expiresAt,
-    };
+// ==========================================================
+// VERIFY OTP
+// ==========================================================
 
-  } catch (error) {
-    console.error("SEND OTP ERROR");
-    console.error(error);
+const verifyPhoneOtp = async (
+  phone,
+  otp,
+  purpose = "signup"
+) => {
 
-    throw error;
+  phone = phone.trim();
+  otp = otp.trim();
+
+  const otpDoc = await PhoneOtp.findOne({
+    phone,
+    purpose,
+  });
+
+  if (!otpDoc) {
+    throw new Error("OTP not found.");
   }
+
+  if (otpDoc.expiresAt < new Date()) {
+    await PhoneOtp.deleteOne({
+      _id: otpDoc._id,
+    });
+
+    throw new Error("OTP has expired.");
+  }
+
+  if (otpDoc.otp !== otp) {
+    throw new Error("Invalid OTP.");
+  }
+
+  otpDoc.verified = true;
+
+  await otpDoc.save();
+
+  return {
+    verified: true,
+  };
 };
 
 module.exports = {
   sendPhoneOtp,
+  verifyPhoneOtp,
 };
