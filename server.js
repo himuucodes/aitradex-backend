@@ -8,12 +8,26 @@ const cookieParser = require("cookie-parser");
 
 const connectDB = require("./src/config/db");
 
+const path = require("path");
+
 // ===============================================
 // Route Imports
 // ===============================================
 
 const authRoutes = require("./src/routes/auth.routes");
 const userRoutes = require("./src/routes/user.routes");
+
+// ===============================================
+// Static Files
+// ===============================================
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/captcha", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "captcha.html")
+  );
+});
 
 // ===============================================
 // App
