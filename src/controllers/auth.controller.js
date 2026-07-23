@@ -224,8 +224,6 @@ exports.signup = async (req, res) => {
   }
 };
 
-
-
 exports.sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -244,12 +242,12 @@ exports.sendOtp = async (req, res) => {
       message: "OTP sent successfully.",
     });
 
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message,
     });
   }
 };
