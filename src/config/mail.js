@@ -1,20 +1,18 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: false,
+  service: "gmail", // Gmail SMTP
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // Gmail App Password
   },
 });
 
-transporter.verify((err) => {
-  if (err) {
-    console.error("SMTP Error:", err);
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Gmail SMTP Error:", error);
   } else {
-    console.log("✅ Brevo SMTP Connected");
+    console.log("✅ Gmail SMTP Connected");
   }
 });
 

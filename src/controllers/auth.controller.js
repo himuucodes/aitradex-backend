@@ -7,8 +7,8 @@ const Otp = require("../models/Otp");
 const transporter = require("../config/mail");
 const generateOtp = require("../utils/generateOtp");
 
-const brevo = require("../config/brevo");
-const email = new (require("@getbrevo/brevo").SendSmtpEmail)();
+const otpService = require("../services/otp.service");
+
 
 // ==========================================================
 // Generate JWT Token
@@ -224,11 +224,11 @@ exports.signup = async (req, res) => {
   }
 };
 
+
+
 exports.sendOtp = async (req, res) => {
   try {
-    console.log("========== SEND OTP ==========");
-
-    let { email } = req.body;
+    const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -237,117 +237,20 @@ exports.sendOtp = async (req, res) => {
       });
     }
 
-    email = email.trim().toLowerCase();
-
-    console.log("Email:", email);
-
-    // Generate OTP
-    const otp = generateOtp();
-
-    console.log("Generated OTP:", otp);
-
-    // Delete old OTP
-    await Otp.deleteMany({ email });
-
-    // Save new OTP
-    await Otp.create({
-      email,
-      otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
-
-    console.log("OTP Saved");
-
-    // Create email
-    const sendSmtpEmail = new (require("@getbrevo/brevo").SendSmtpEmail)();
-
-    sendSmtpEmail.sender = {
-      name: process.env.SENDER_NAME,
-      email: process.env.SENDER_EMAIL,
-    };
-
-    sendSmtpEmail.to = [
-      {
-        email: email,
-      },
-    ];
-
-    sendSmtpEmail.subject = "AiTradeX Email Verification";
-
-    sendSmtpEmail.htmlContent = `
-<!DOCTYPE html>
-<html>
-<body style="margin:0;padding:30px;background:#f5f5f5;font-family:Arial">
-
-<div style="
-    max-width:600px;
-    margin:auto;
-    background:#ffffff;
-    padding:40px;
-    border-radius:12px;
-">
-
-<h2 style="color:#F92902;">
-AiTradeX
-</h2>
-
-<p>Hello,</p>
-
-<p>Your One-Time Password (OTP) for email verification is:</p>
-
-<div style="
-font-size:42px;
-font-weight:bold;
-color:#F92902;
-letter-spacing:10px;
-text-align:center;
-margin:30px 0;
-">
-${otp}
-</div>
-
-<p>
-This OTP will expire in <b>5 minutes</b>.
-</p>
-
-<p>
-If you did not request this verification, please ignore this email.
-</p>
-
-<hr>
-
-<p>
-Regards,<br>
-<b>AiTradeX Team</b>
-</p>
-
-</div>
-
-</body>
-</html>
-`;
-
-    console.log("Sending Email...");
-
-    await brevo.sendTransacEmail(sendSmtpEmail);
-
-    console.log("Email Sent Successfully");
+    await otpService.sendOtp(email);
 
     return res.status(200).json({
       success: true,
       message: "OTP sent successfully.",
     });
 
-  } catch (err) {
-
-    console.error("========== SEND OTP ERROR ==========");
-    console.error(err);
+  } catch (error) {
+    console.error(error);
 
     return res.status(500).json({
       success: false,
-      message: err.message || "Failed to send OTP.",
+      message: error.message,
     });
-
   }
 };
 

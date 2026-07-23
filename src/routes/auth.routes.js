@@ -41,11 +41,23 @@ router.get("/smtp-test", async (req, res) => {
     await transporter.verify();
 
     await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to: "thunderxgod06@gmail.com", // Replace with your Gmail
-      subject: "Render SMTP Test",
-      text: "Hello from Render!",
+      from: `"AiTradeX" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "AiTradeX Email Verification",
+      html: `
+    <h2>AiTradeX</h2>
+
+    <p>Your OTP is:</p>
+
+    <h1 style="letter-spacing:8px;color:#F92902;">
+      ${otp}
+    </h1>
+
+    <p>This OTP expires in 5 minutes.</p>
+  `,
     });
+
+    console.log("Email Sent Successfully");
 
     return res.json({
       success: true,
