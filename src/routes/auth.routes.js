@@ -40,41 +40,64 @@ router.get("/smtp-test", async (req, res) => {
   try {
     await transporter.verify();
 
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"AiTradeX" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "AiTradeX Email Verification",
+      to: process.env.EMAIL_USER, // or "yourtest@gmail.com"
+      subject: "Render SMTP Test",
       html: `
-    <h2>AiTradeX</h2>
-
-    <p>Your OTP is:</p>
-
-    <h1 style="letter-spacing:8px;color:#F92902;">
-      ${otp}
-    </h1>
-
-    <p>This OTP expires in 5 minutes.</p>
-  `,
+        <h2>AiTradeX SMTP Test</h2>
+        <p>If you received this email, Gmail SMTP is working correctly.</p>
+      `,
     });
 
-    console.log("Email Sent Successfully");
-
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "SMTP Working",
+      messageId: info.messageId,
     });
 
   } catch (err) {
-
     console.error(err);
 
     return res.status(500).json({
       success: false,
-      error: err.message,
+      message: err.message,
       code: err.code,
+      errno: err.errno,
+      syscall: err.syscall,
+      address: err.address,
+      port: err.port,
       response: err.response,
     });
+  }
+});
 
+router.get("/otp-test", async (req, res) => {
+  try {
+    const otp = "123456";
+
+    await transporter.sendMail({
+      from: `"AiTradeX" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER,
+      subject: "OTP Test",
+      html: `
+        <h2>AiTradeX</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+      `,
+    });
+
+    res.json({
+      success: true,
+      message: "OTP email sent",
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      code: err.code,
+    });
   }
 });
 
