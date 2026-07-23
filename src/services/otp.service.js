@@ -65,7 +65,18 @@ const verifyPhoneOtp = async (phone, otp) => {
   console.log("All OTP Records:");
   console.log(allOtps);
 
-  const otpDoc = await PhoneOtp.findOne({ phone });
+  console.log("Searching phone:", JSON.stringify(phone));
+
+  const allOtps = await PhoneOtp.find();
+
+  console.log("All OTPs:");
+  console.log(allOtps);
+
+  const otpDoc = await PhoneOtp.findOne({
+    phone: phone.trim(),
+  }).sort({ createdAt: -1 });
+
+  console.log("Found OTP:", otpDoc);
 
   console.log("Mongo Result:", otpDoc);
 

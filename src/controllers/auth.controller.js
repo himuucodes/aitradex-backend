@@ -253,7 +253,13 @@ exports.sendPhoneOtp = async (req, res) => {
 
 exports.verifyPhoneOtp = async (req, res) => {
   try {
+    console.log("========== VERIFY PHONE OTP ==========");
+    console.log(req.body);
+
     const { phone, otp } = req.body;
+
+    console.log("Phone:", phone);
+    console.log("OTP:", otp);
 
     if (!phone || !otp) {
       return res.status(400).json({
