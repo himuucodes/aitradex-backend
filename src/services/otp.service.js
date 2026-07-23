@@ -56,27 +56,14 @@ const verifyPhoneOtp = async (phone, otp) => {
   phone = phone.trim();
   otp = otp.trim();
 
-  console.log("========== VERIFY OTP ==========");
-  console.log("Phone received:", phone);
-  console.log("OTP received:", otp);
-
-  const allOtps = await PhoneOtp.find();
-
-  console.log("All OTP Records:");
-  console.log(allOtps);
-
-  console.log("Searching phone:", JSON.stringify(phone));
-
-  const allOtps = await PhoneOtp.find();
-
-  console.log("All OTPs:");
-  console.log(allOtps);
+  console.log("================================");
+  console.log("VERIFY OTP");
+  console.log("Phone:", phone);
+  console.log("OTP:", otp);
 
   const otpDoc = await PhoneOtp.findOne({
-    phone: phone.trim(),
+    phone,
   }).sort({ createdAt: -1 });
-
-  console.log("Found OTP:", otpDoc);
 
   console.log("Mongo Result:", otpDoc);
 
@@ -85,9 +72,15 @@ const verifyPhoneOtp = async (phone, otp) => {
   }
 
   if (otpDoc.expiresAt < new Date()) {
-    await PhoneOtp.deleteOne({ _id: otpDoc._id });
-    throw new Error("OTP has expired.");
+    await PhoneOtp.deleteOne({
+      _id: otpDoc._id,
+    });
+
+    throw new Error("OTP expired.");
   }
+
+  console.log("Database OTP:", otpDoc.otp);
+  console.log("Entered OTP :", otp);
 
   if (otpDoc.otp !== otp) {
     throw new Error("Invalid OTP.");
@@ -96,7 +89,9 @@ const verifyPhoneOtp = async (phone, otp) => {
   otpDoc.verified = true;
   await otpDoc.save();
 
-  await PhoneOtp.deleteOne({ _id: otpDoc._id });
+  await PhoneOtp.deleteOne({
+    _id: otpDoc._id,
+  });
 
   return {
     verified: true,
