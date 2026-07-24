@@ -154,15 +154,14 @@ const verifyOtp = async (verificationId, otp) => {
     console.log("Verification ID :", verificationId);
     console.log("OTP             :", otp);
 
-    const response = await messageCentral.post(
+    const response = await messageCentral.get(   // <-- changed from .post to .get
       "/verification/v3/validateOtp",
-      null,
       {
         headers: {
           authToken,
         },
         params: {
-          customerId: process.env.MESSAGE_CENTRAL_CUSTOMER_ID, // <-- was missing, causes 401
+          customerId: process.env.MESSAGE_CENTRAL_CUSTOMER_ID,
           verificationId: String(verificationId),
           code: String(otp),
           flowType: "SMS",
