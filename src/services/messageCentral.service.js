@@ -146,31 +146,61 @@ const sendOtp = async (phone) => {
 // ==========================================================
 
 const verifyOtp = async (verificationId, otp) => {
+  try {
     const authToken = await generateAuthToken();
 
-    console.log("VERIFY REQUEST");
-    console.log({
-        verificationId,
-        otp,
-    });
+    console.log("====================================");
+    console.log("VERIFY OTP REQUEST");
+    console.log("Verification ID :", verificationId);
+    console.log("OTP             :", otp);
 
-    const response = await axios({
-        method: "POST",
-        url: "https://cpaas.messagecentral.com/verification/v3/validateOtp",
+    const response = await messageCentral.post(
+      "/verification/v3/validateOtp",
+      null,
+      {
         headers: {
-            authToken: authToken,
-            Accept: "*/*",
+          authToken,
         },
         params: {
-            verificationId,
-            code: otp,
-            flowType: "SMS",
+          verificationId: String(verificationId),
+          code: String(otp),
+          flowType: "SMS",
+          langid: "en",
         },
-    });
+        validateStatus: () => true,
+      }
+    );
 
-    console.log(response.data);
+    console.log("====================================");
+    console.log("VERIFY STATUS :", response.status);
+    console.log("VERIFY DATA");
+    console.log(JSON.stringify(response.data, null, 2));
 
-    return response.data;
+    if (response.status === 200) {
+      return response.data;
+    }
+
+    throw new Error(
+      response.data?.message ||
+      response.data?.error ||
+      `HTTP ${response.status}`
+    );
+
+  } catch (error) {
+
+    console.log("====================================");
+    console.log("VERIFY OTP ERROR");
+
+    if (error.response) {
+      console.log("Status :", error.response.status);
+      console.log("Headers :", error.response.headers);
+      console.log("Body :", error.response.data);
+    } else {
+      console.log(error.message);
+    }
+
+    throw error;
+  }
 };
 
 module.exports = {
