@@ -1,8 +1,7 @@
 const PhoneVerification = require("../models/PhoneVerification");
-
 const {
-    sendOtp,
-    verifyOtp,
+  sendOtp,
+  verifyOtp,
 } = require("./messageCentral.service");
 
 // ==========================================================
@@ -10,63 +9,59 @@ const {
 // ==========================================================
 
 const sendPhoneOtp = async (phone) => {
-    try {
-        phone = String(phone).trim();
+  phone = String(phone).trim();
 
-        if (!phone) {
-            throw new Error("Phone number is required.");
-        }
+  if (!phone) {
+    throw new Error("Phone number is required.");
+  }
 
-        console.log("====================================");
-        console.log("SEND PHONE OTP");
-        console.log("Phone :", phone);
+  console.log("====================================");
+  console.log("SEND PHONE OTP");
+  console.log("Phone :", phone);
 
-        // Remove previous verification request
-        await PhoneVerification.deleteMany({ phone });
+  // Remove previous verification
+  await PhoneVerification.deleteMany({ phone });
 
-        // Send OTP through Message Central
-        const response = await sendOtp(phone);
+  // Send OTP through Message Central
+  const response = await sendOtp(phone);
 
-        if (
-            !response ||
-            response.responseCode !== 200 ||
-            !response.data
-        ) {
-            throw new Error(
-                response?.message || "Failed to send OTP."
-            );
-        }
+  console.log("========== SEND OTP RESPONSE ==========");
+  console.log(JSON.stringify(response, null, 2));
 
-        const verificationId = String(
-            response.data.verificationId
-        );
+  if (!response) {
+    throw new Error("Message Central did not return any response.");
+  }
 
-        const timeout = Number(response.data.timeout || 300);
+  // Support different response formats
+  const verificationId =
+    response?.data?.verificationId ||
+    response?.verificationId;
 
-        const expiresAt = new Date(
-            Date.now() + timeout * 1000
-        );
+  const timeout =
+    Number(response?.data?.timeout) ||
+    Number(response?.timeout) ||
+    300;
 
-        await PhoneVerification.create({
-            phone,
-            verificationId,
-            verified: false,
-            expiresAt,
-        });
+  if (!verificationId) {
+    throw new Error("Verification ID not found in Message Central response.");
+  }
 
-        console.log("Verification ID:", verificationId);
+  const expiresAt = new Date(Date.now() + timeout * 1000);
 
-        return {
-            success: true,
-            expiresAt,
-        };
+  await PhoneVerification.create({
+    phone,
+    verificationId,
+    verified: false,
+    expiresAt,
+  });
 
-    } catch (error) {
-        console.error("SEND PHONE OTP ERROR");
-        console.error(error);
+  console.log("Verification ID :", verificationId);
 
-        throw error;
-    }
+  return {
+    success: true,
+    message: "OTP sent successfully.",
+    expiresAt,
+  };
 };
 
 // ==========================================================
@@ -74,70 +69,80 @@ const sendPhoneOtp = async (phone) => {
 // ==========================================================
 
 const verifyPhoneOtp = async (phone, otp) => {
-    try {
-        phone = String(phone).trim();
-        otp = String(otp).trim();
+  phone = String(phone).trim();
+  otp = String(otp).trim();
 
-        console.log("====================================");
-        console.log("VERIFY PHONE OTP");
-        console.log("Phone :", phone);
-        console.log("OTP   :", otp);
+  if (!phone || !otp) {
+    throw new Error("Phone and OTP are required.");
+  }
 
-        const verification = await PhoneVerification.findOne({
-            phone,
-            verified: false,
-        });
-        console.log("Mongo Verification");
-        console.log(verification);
+  console.log("====================================");
+  console.log("VERIFY PHONE OTP");
+  console.log("Phone :", phone);
+  console.log("OTP   :", otp);
 
-        if (!verification) {
-            throw new Error("Verification request not found.");
-        }
+  const verification = await PhoneVerification.findOne({
+    phone,
+    verified: false,
+  });
 
-        if (verification.expiresAt < new Date()) {
-            await PhoneVerification.deleteOne({
-                _id: verification._id,
-            });
+  console.log("Mongo Verification");
+  console.log(verification);
 
-            throw new Error("OTP expired.");
-        }
+  if (!verification) {
+    throw new Error("Verification request not found.");
+  }
 
-        console.log("Verification ID :", verification.verificationId);
-        console.log("Entered OTP     :", otp);
+  if (verification.expiresAt < new Date()) {
+    await PhoneVerification.deleteOne({
+      _id: verification._id,
+    });
 
-        const response = await verifyOtp(
-            verification.verificationId,
-            otp
-        );
+    throw new Error("OTP expired.");
+  }
 
-        console.log("VERIFY API RESPONSE");
-        console.log(JSON.stringify(response, null, 2));
+  console.log("Verification ID :", verification.verificationId);
 
-        if (
-            !response ||
-            response.responseCode !== 200
-        ) {
-            throw new Error(
-                response?.message || "OTP verification failed."
-            );
-        }
+  const response = await verifyOtp(
+    verification.verificationId,
+    otp
+  );
 
-        verification.verified = true;
+  console.log("========== VERIFY OTP RESPONSE ==========");
+  console.log(JSON.stringify(response, null, 2));
 
-        await verification.save();
+  if (!response) {
+    throw new Error("Message Central returned an empty response.");
+  }
 
-        return {
-            success: true,
-            verified: true,
-            message: "Phone verified successfully.",
-        };
+  // Accept common success formats
+  const verified =
+    response?.verified === true ||
+    response?.success === true ||
+    response?.status === 200 ||
+    response?.responseCode === 200;
 
-    } catch (error) {
-        console.error("VERIFY PHONE OTP ERROR");
-        console.error(error);
+  if (!verified) {
+    throw new Error(
+      response?.message ||
+      response?.error ||
+      "OTP verification failed."
+    );
+  }
 
-        throw error;
-    }
+  verification.verified = true;
+  await verification.save();
+
+  // Optional: remove verification after success
+  await PhoneVerification.deleteOne({
+    _id: verification._id,
+  });
+
+  return {
+    success: true,
+    verified: true,
+    message: "Phone verified successfully.",
+  };
 };
 
 // ==========================================================
@@ -145,11 +150,11 @@ const verifyPhoneOtp = async (phone, otp) => {
 // ==========================================================
 
 const resendPhoneOtp = async (phone) => {
-    return sendPhoneOtp(phone);
+  return sendPhoneOtp(phone);
 };
 
 module.exports = {
-    sendPhoneOtp,
-    verifyPhoneOtp,
-    resendPhoneOtp,
+  sendPhoneOtp,
+  verifyPhoneOtp,
+  resendPhoneOtp,
 };

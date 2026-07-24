@@ -122,6 +122,9 @@ const sendOtp = async (phone) => {
             }
         );
 
+        console.log("SEND OTP RESPONSE");
+        console.log(JSON.stringify(response.data, null, 2));
+
         return response.data;
 
     } catch (error) {
@@ -143,8 +146,13 @@ const sendOtp = async (phone) => {
 // ==========================================================
 
 const verifyOtp = async (verificationId, otp) => {
+    const authToken = await generateAuthToken();
+
     try {
-        const authToken = await generateAuthToken();
+        console.log("====================================");
+        console.log("VERIFY OTP REQUEST");
+        console.log("Verification ID :", verificationId);
+        console.log("OTP             :", otp);
 
         const response = await messageCentral.post(
             "/verification/v3/validateOtp",
@@ -156,31 +164,30 @@ const verifyOtp = async (verificationId, otp) => {
                 params: {
                     verificationId,
                     code: otp,
+                    flowType: "SMS",
                 },
             }
         );
 
+        console.log("VERIFY RESPONSE");
+        console.log(JSON.stringify(response.data, null, 2));
+
         return response.data;
 
     } catch (error) {
-        console.error("========== MESSAGE CENTRAL VERIFY OTP ERROR ==========");
+
+        console.log("VERIFY ERROR");
 
         if (error.response) {
-            console.error("Status :", error.response.status);
-            console.error("Data :", JSON.stringify(error.response.data, null, 2));
+            console.log("Status:", error.response.status);
+            console.log(
+                JSON.stringify(error.response.data, null, 2)
+            );
         } else {
-            console.error(error.message);
+            console.log(error.message);
         }
 
-        throw new Error(
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            "OTP verification failed."
-        );
-
-        console.log("Verification ID:", verificationId);
-        console.log("OTP:", otp);
-        console.log("Auth Token:", authToken.substring(0, 25) + "...");
+        throw error;
     }
 };
 
