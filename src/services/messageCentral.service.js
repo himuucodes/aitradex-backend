@@ -162,6 +162,7 @@ const verifyOtp = async (verificationId, otp) => {
           authToken,
         },
         params: {
+          customerId: process.env.MESSAGE_CENTRAL_CUSTOMER_ID, // <-- was missing, causes 401
           verificationId: String(verificationId),
           code: String(otp),
           flowType: "SMS",
@@ -187,7 +188,6 @@ const verifyOtp = async (verificationId, otp) => {
     );
 
   } catch (error) {
-
     console.log("====================================");
     console.log("VERIFY OTP ERROR");
 
