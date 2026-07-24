@@ -148,47 +148,29 @@ const sendOtp = async (phone) => {
 const verifyOtp = async (verificationId, otp) => {
     const authToken = await generateAuthToken();
 
-    try {
-        console.log("====================================");
-        console.log("VERIFY OTP REQUEST");
-        console.log("Verification ID :", verificationId);
-        console.log("OTP             :", otp);
+    console.log("VERIFY REQUEST");
+    console.log({
+        verificationId,
+        otp,
+    });
 
-        const response = await messageCentral.post(
-            "/verification/v3/validateOtp",
-            null,
-            {
-                headers: {
-                    authToken,
-                },
-                params: {
-                    verificationId,
-                    code: otp,
-                    flowType: "SMS",
-                },
-            }
-        );
+    const response = await axios({
+        method: "POST",
+        url: "https://cpaas.messagecentral.com/verification/v3/validateOtp",
+        headers: {
+            authToken: authToken,
+            Accept: "*/*",
+        },
+        params: {
+            verificationId,
+            code: otp,
+            flowType: "SMS",
+        },
+    });
 
-        console.log("VERIFY RESPONSE");
-        console.log(JSON.stringify(response.data, null, 2));
+    console.log(response.data);
 
-        return response.data;
-
-    } catch (error) {
-
-        console.log("VERIFY ERROR");
-
-        if (error.response) {
-            console.log("Status:", error.response.status);
-            console.log(
-                JSON.stringify(error.response.data, null, 2)
-            );
-        } else {
-            console.log(error.message);
-        }
-
-        throw error;
-    }
+    return response.data;
 };
 
 module.exports = {
