@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const PhoneOtp = require("../models/PhoneOtp");
 
-const otpService = require("../services/otp.service");
+const otpService = require("../services/phoneOtpService");
 const { verifyTurnstile } = require("../services/turnstile.service");
 
 // ==========================================================
@@ -223,30 +223,52 @@ exports.signup = async (req, res) => {
 
 exports.sendPhoneOtp = async (req, res) => {
   try {
-    const { phone, purpose = "signup" } = req.body;
+    let { phone, purpose = "signup" } = req.body;
 
-    if (!phone) {
+    // Validate phone
+    if (!phone || typeof phone !== "string") {
       return res.status(400).json({
         success: false,
         message: "Phone number is required.",
       });
     }
 
+    phone = phone.trim();
+
+    if (phone.length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid phone number.",
+      });
+    }
+
+    console.log("================================");
+    console.log("SEND PHONE OTP");
+    console.log("Phone   :", phone);
+    console.log("Purpose :", purpose);
+
     const result = await otpService.sendPhoneOtp(phone, purpose);
 
-    return res.status(200).json({
+    const response = {
       success: true,
       message: "OTP sent successfully.",
-      otp: result.otp,          // Remove this later in production
       expiresAt: result.expiresAt,
-    });
+    };
+
+    // Return OTP only in development
+    if (process.env.NODE_ENV === "development") {
+      response.otp = result.otp;
+    }
+
+    return res.status(200).json(response);
 
   } catch (error) {
+    console.error("========== SEND PHONE OTP ERROR ==========");
     console.error(error);
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Failed to send OTP.",
     });
   }
 };
