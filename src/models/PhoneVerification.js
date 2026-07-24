@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const phoneOtpSchema = new mongoose.Schema(
+const phoneVerificationSchema = new mongoose.Schema(
   {
     phone: {
       type: String,
@@ -10,7 +10,7 @@ const phoneOtpSchema = new mongoose.Schema(
       index: true,
     },
 
-    otp: {
+    verificationId: {
       type: String,
       required: true,
       trim: true,
@@ -21,11 +21,16 @@ const phoneOtpSchema = new mongoose.Schema(
       default: false,
     },
 
+    flowType: {
+      type: String,
+      default: "SMS",
+    },
+
     expiresAt: {
       type: Date,
       required: true,
       index: {
-        expires: 0, // Automatically delete expired OTP
+        expires: 0, // Auto delete after expiry
       },
     },
   },
@@ -35,4 +40,7 @@ const phoneOtpSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("PhoneOtp", phoneOtpSchema);
+module.exports = mongoose.model(
+  "PhoneVerification",
+  phoneVerificationSchema
+);

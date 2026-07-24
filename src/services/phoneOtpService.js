@@ -1,79 +1,15 @@
-const axios = require("axios");
-const PhoneOtp = require("../models/PhoneOtp");
+const PhoneVerification = require("../models/PhoneVerification");
 
-// ==========================================================
-// Message Central Client
-// ==========================================================
-
-const messageCentral = axios.create({
-  baseURL: "https://cpaas.messagecentral.com",
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    authToken: process.env.MESSAGE_CENTRAL_AUTH_TOKEN,
-  },
-});
-
-// ==========================================================
-// Generate 6 Digit OTP
-// ==========================================================
-
-const generateOtp = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-// ==========================================================
-// Send SMS using Message Central
-// ==========================================================
-
-const sendSms = async (phone, otp) => {
-  try {
-    const mobile = phone.replace(/^\+/, "");
-
-    const response = await messageCentral.post(
-      "/verification/v3/send",
-      {
-        customerId: process.env.MESSAGE_CENTRAL_CUSTOMER_ID,
-        countryCode: process.env.MESSAGE_CENTRAL_COUNTRY,
-        mobileNumber: mobile,
-        flowType: "SMS",
-        otp,
-        message: `Your AiTradeX OTP is ${otp}. It is valid for 5 minutes.`,
-      }
-    );
-
-    console.log("========== MESSAGE CENTRAL SUCCESS ==========");
-    console.log("Status:", response.status);
-    console.log("Data:", JSON.stringify(response.data, null, 2));
-
-    return response.data;
-  } catch (error) {
-    console.error("========== MESSAGE CENTRAL ERROR ==========");
-
-    if (error.response) {
-      console.error("Status:", error.response.status);
-      console.error(
-        "Response:",
-        JSON.stringify(error.response.data, null, 2)
-      );
-
-      throw new Error(
-        error.response.data?.message ||
-          "Message Central rejected the request."
-      );
-    }
-
-    console.error("Message:", error.message);
-    throw new Error("Unable to connect to Message Central.");
-  }
-};
+const {
+  sendOtp,
+  verifyOtp,
+} = require("./messageCentral.service");
 
 // ==========================================================
 // SEND PHONE OTP
 // ==========================================================
 
-const sendPhoneOtp = async (phone, purpose = "signup") => {
+const sendPhoneOtp = async (phone) => {
   try {
     phone = String(phone).trim();
 
@@ -83,34 +19,48 @@ const sendPhoneOtp = async (phone, purpose = "signup") => {
 
     console.log("====================================");
     console.log("SEND PHONE OTP");
-    console.log("Phone   :", phone);
-    console.log("Purpose :", purpose);
+    console.log("Phone :", phone);
 
-    // Delete previous OTP
-    await PhoneOtp.deleteMany({ phone });
+    // Remove previous verification request
+    await PhoneVerification.deleteMany({ phone });
 
-    const otp = generateOtp();
+    // Send OTP through Message Central
+    const response = await sendOtp(phone);
 
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    if (
+      !response ||
+      response.responseCode !== 200 ||
+      !response.data
+    ) {
+      throw new Error(
+        response?.message || "Failed to send OTP."
+      );
+    }
 
-    const otpDoc = await PhoneOtp.create({
+    const verificationId = String(
+      response.data.verificationId
+    );
+
+    const timeout = Number(response.data.timeout || 300);
+
+    const expiresAt = new Date(
+      Date.now() + timeout * 1000
+    );
+
+    await PhoneVerification.create({
       phone,
-      otp,
+      verificationId,
       verified: false,
       expiresAt,
     });
 
-    console.log("OTP SAVED");
-    console.log("OTP:", otp);
-
-    // Send SMS
-    await sendSms(phone, otp);
+    console.log("Verification ID:", verificationId);
 
     return {
       success: true,
-      otp,
-      expiresAt: otpDoc.expiresAt,
+      expiresAt,
     };
+
   } catch (error) {
     console.error("SEND PHONE OTP ERROR");
     console.error(error);
@@ -133,40 +83,47 @@ const verifyPhoneOtp = async (phone, otp) => {
     console.log("Phone :", phone);
     console.log("OTP   :", otp);
 
-    const otpDoc = await PhoneOtp.findOne({
+    const verification = await PhoneVerification.findOne({
       phone,
       verified: false,
-    }).sort({ createdAt: -1 });
+    });
 
-    if (!otpDoc) {
-      throw new Error("OTP not found.");
+    if (!verification) {
+      throw new Error("Verification request not found.");
     }
 
-    if (new Date() > otpDoc.expiresAt) {
-      await PhoneOtp.deleteOne({
-        _id: otpDoc._id,
+    if (verification.expiresAt < new Date()) {
+      await PhoneVerification.deleteOne({
+        _id: verification._id,
       });
 
       throw new Error("OTP expired.");
     }
 
-    if (String(otpDoc.otp) !== otp) {
-      throw new Error("Invalid OTP.");
+    const response = await verifyOtp(
+      verification.verificationId,
+      otp
+    );
+
+    if (
+      !response ||
+      response.responseCode !== 200
+    ) {
+      throw new Error(
+        response?.message || "OTP verification failed."
+      );
     }
 
-    otpDoc.verified = true;
+    verification.verified = true;
 
-    await otpDoc.save();
-
-    await PhoneOtp.deleteOne({
-      _id: otpDoc._id,
-    });
+    await verification.save();
 
     return {
       success: true,
       verified: true,
       message: "Phone verified successfully.",
     };
+
   } catch (error) {
     console.error("VERIFY PHONE OTP ERROR");
     console.error(error);
@@ -176,8 +133,15 @@ const verifyPhoneOtp = async (phone, otp) => {
 };
 
 // ==========================================================
+// RESEND OTP
+// ==========================================================
+
+const resendPhoneOtp = async (phone) => {
+  return sendPhoneOtp(phone);
+};
 
 module.exports = {
   sendPhoneOtp,
   verifyPhoneOtp,
+  resendPhoneOtp,
 };
