@@ -168,17 +168,22 @@ const verifyPhoneOtp = async (phone, otp) => {
       );
     }
 
-    const verified =
-      response?.verified === true ||
-      response?.success === true ||
-      response?.status === 200 ||
-      Number(response?.responseCode) === 200;
+    // Message Central returns HTTP 200 (and responseCode 200) for BOTH
+    // correct and incorrect OTPs. The only reliable signal is
+    // data.verificationStatus === "VERIFICATION_COMPLETED".
+    // Checking responseCode/status alone would mark wrong OTPs as verified.
+    const verificationStatus =
+      response?.data?.verificationStatus ||
+      response?.verificationStatus;
+
+    const verified = verificationStatus === "VERIFICATION_COMPLETED";
 
     if (!verified) {
       throw new Error(
+        response?.data?.errorMessage ||
+        response?.errorMessage ||
         response?.message ||
-        response?.error ||
-        "OTP verification failed."
+        "Invalid OTP. Please try again."
       );
     }
 
