@@ -173,13 +173,25 @@ exports.signup = async (req, res) => {
       nomineeRelation,
     };
 
-    console.log("========== USER DATA ==========");
+    console.log("========== CREATING USER ==========");
     console.log(JSON.stringify(userData, null, 2));
 
-    const user = await User.create(userData);
+    let user;
 
-    console.log("========== USER SAVED ==========");
-    console.log(user);
+    try {
+      user = await User.create(userData);
+
+      console.log("========== USER CREATED ==========");
+      console.log(user._id.toString());
+    } catch (err) {
+      console.error("========== USER CREATE FAILED ==========");
+      console.error(err);
+
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
 
     // =============================
     // JWT

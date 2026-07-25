@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: /^\S+@\S+\.\S+$/,
     },
 
     phone: {
@@ -25,6 +26,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      match: /^\+?[1-9]\d{9,14}$/,
     },
 
     countryCode: {
@@ -34,7 +36,7 @@ const UserSchema = new mongoose.Schema(
 
     mpin: {
       type: String,
-      default: "",
+      required: true,
     },
 
     // ==========================================================
@@ -101,6 +103,12 @@ const UserSchema = new mongoose.Schema(
       type: String,
       uppercase: true,
       trim: true,
+      unique: true,
+      sparse: true,
+    }, panNumber: {
+      type: String,
+      uppercase: true,
+      trim: true,
       default: "",
     },
 
@@ -111,8 +119,8 @@ const UserSchema = new mongoose.Schema(
 
     aadhaarNumber: {
       type: String,
-      trim: true,
-      default: "",
+      unique: true,
+      sparse: true,
     },
 
     aadhaarFrontUrl: {
