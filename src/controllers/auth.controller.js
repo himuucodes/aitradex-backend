@@ -306,10 +306,35 @@ exports.verifyPhoneOtp = async (req, res) => {
       otp
     );
 
+    const user = await User.findOne({
+      phone: phone.trim(),
+    });
+
+    if (user) {
+
+      // Existing user
+      const token = generateToken(user._id);
+
+      user.lastLogin = new Date();
+      await user.save();
+
+      user.mpin = undefined;
+
+      return res.status(200).json({
+        success: true,
+        message: "Login successful.",
+        userExists: true,
+        token,
+        user,
+      });
+
+    }
+
+    // New user
     return res.status(200).json({
       success: true,
       message: "OTP verified successfully.",
-      data: result,
+      userExists: false,
     });
 
   } catch (error) {

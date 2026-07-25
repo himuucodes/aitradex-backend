@@ -105,10 +105,6 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       unique: true,
       sparse: true,
-    }, panNumber: {
-      type: String,
-      uppercase: true,
-      trim: true,
       default: "",
     },
 
