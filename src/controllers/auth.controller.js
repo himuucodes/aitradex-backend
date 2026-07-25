@@ -350,6 +350,36 @@ exports.resendPhoneOtp = async (req, res) => {
     });
   }
 };
+
+exports.checkEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.trim().toLowerCase(),
+    });
+
+    return res.status(200).json({
+      success: true,
+      exists: !!user,
+    });
+  } catch (error) {
+    console.error("CHECK EMAIL ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 exports.verifyTurnstile = async (req, res) => {
   try {
     const { email, token } = req.body;

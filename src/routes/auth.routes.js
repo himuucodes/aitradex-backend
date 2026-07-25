@@ -34,6 +34,8 @@ router.post(
 // CAPTCHA
 // ==========================================================
 
+router.post("/check-email", authController.checkEmail);
+
 router.post(
   "/verify-turnstile",
   authController.verifyTurnstile
