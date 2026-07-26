@@ -15,6 +15,7 @@ const connectDB = require("./src/config/db");
 
 const authRoutes = require("./src/routes/auth.routes");
 const userRoutes = require("./src/routes/user.routes");
+const uploadRoutes = require("./src/routes/upload.routes");
 
 // ===============================================
 // App
@@ -84,6 +85,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // ===============================================
 // 404 Route
